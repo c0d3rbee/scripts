@@ -1,13 +1,13 @@
 import subprocess
 import os
 
-def clone_repo(url, dest_dir):
+def clone_repo(url, dest_dir, branch="main"):
     try:
-        subprocess.run(['git', 'clone', url, dest_dir], check=True)
-        print(f"Cloned repository: {url}")
+        subprocess.run(['git', 'clone', '-b', branch, url, dest_dir], check=True)
+        print(f"Cloned repository: {url} (branch: {branch})")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"Error cloning repository: {url}\n{e}")
+        print(f"Error cloning repository: {url} (branch: {branch})\n{e}")
         return False
 
 def run_maven_command(command, dir):
@@ -21,20 +21,18 @@ def run_maven_command(command, dir):
 
 def main():
     with open('repo_urls.txt', 'r') as f:
-        urls = f.readlines()
-
-    for url in urls:
-        url = url.strip()
-        repo_name = url.split('/')[-1].split('.')[0]
-        dest_dir = os.path.join('cloned_repos', repo_name)
-
-        if clone_repo(url, dest_dir):
-            # List of Maven commands to execute
-            commands = ['clean', 'compile', 'test', 'package']
-
-            for command in commands:
-                if not run_maven_command(command, dest_dir):
-                    break  # Stop processing if a command fails
+        for line in f:
+            url, branch = line.strip().split()
+            repo_name = url.split('/')[-1].split('.')[0]
+            dest_dir = os.path.join('cloned_repos', repo_name)
+    
+            if clone_repo(url, dest_dir, branch):
+                # List of Maven commands to execute
+                commands = ['clean', 'compile', 'test', 'package']
+    
+                for command in commands:
+                    if not run_maven_command(command, dest_dir):
+                        break  # Stop processing if a command fails
 
 if __name__ == '__main__':
     main()
